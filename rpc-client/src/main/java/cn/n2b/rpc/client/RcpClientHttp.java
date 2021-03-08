@@ -5,8 +5,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RcpClientHttp {
+
+
+    private static Map<String, RestTemplate> restTemplateMap = new ConcurrentHashMap();
+    private static Lock lock = new ReentrantLock();
+
     /**
      * 获取列表类型的数据
      *
@@ -234,6 +245,14 @@ public class RcpClientHttp {
         return null;
     }
 
+    /**
+     * 提交post请求
+     *
+     * @param url(完整url)
+     * @param params     参数
+     * @param <T>
+     * @return
+     */
     private static <T> String post(String url, T params) {
         RestTemplate restTemplate = getRestTemplate(url);
         ResponseEntity<String> rest = restTemplate.postForEntity(url, params, String.class);
@@ -242,7 +261,27 @@ public class RcpClientHttp {
     }
 
     private static RestTemplate getRestTemplate(String url) {
-        RestTemplate restTemplate = new RestTemplate();
+        String domain = null;
+        if (url == null || url.trim().length() == 0)
+            return null;
+        if (url.startsWith("http")) {
+            domain = url.split("[://]")[1];
+        }
+        domain = url.split("/")[0];
+        RestTemplate restTemplate = restTemplateMap.get(domain);
+        if (restTemplate == null) {
+            try {
+                lock.lock();
+                if (restTemplate == null) {
+                    restTemplate = new RestTemplate();
+                    restTemplate.put(domain, restTemplate);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }
+        }
         return restTemplate;
     }
 
