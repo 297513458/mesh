@@ -7,11 +7,12 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * 本类基于spring的RestTemplate实现http调用,同步阻塞,但是使用简单
+ */
 public class RcpClientHttp {
 
 
